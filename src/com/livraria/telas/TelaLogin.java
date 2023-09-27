@@ -4,6 +4,8 @@
  */
 package com.livraria.telas;
 
+import java.awt.Color;
+
 /**
  *
  * @author yago.aguiar
@@ -53,8 +55,18 @@ public class TelaLogin extends javax.swing.JFrame {
         jPanel1.setMinimumSize(new java.awt.Dimension(300, 300));
 
         txtUsuario.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        txtUsuario.setForeground(new java.awt.Color(153, 153, 153));
+        txtUsuario.setText("Insira seu usuário");
         txtUsuario.setToolTipText("");
         txtUsuario.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(0, 0, 0)));
+        txtUsuario.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtUsuarioFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtUsuarioFocusLost(evt);
+            }
+        });
 
         jLabel2.setBackground(new java.awt.Color(51, 51, 51));
         jLabel2.setFont(new java.awt.Font("Verdana", 0, 18)); // NOI18N
@@ -72,7 +84,14 @@ public class TelaLogin extends javax.swing.JFrame {
         jLabel4.setText("BEM-VINDO,");
 
         txtSenha.setFont(new java.awt.Font("Verdana", 0, 12)); // NOI18N
+        txtSenha.setForeground(new java.awt.Color(153, 153, 153));
+        txtSenha.setToolTipText("");
         txtSenha.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(0, 0, 0)));
+        txtSenha.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtSenhaActionPerformed(evt);
+            }
+        });
 
         jButton1.setBackground(new java.awt.Color(255, 51, 51));
         jButton1.setFont(new java.awt.Font("Verdana", 1, 18)); // NOI18N
@@ -194,6 +213,24 @@ public class TelaLogin extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void txtUsuarioFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtUsuarioFocusGained
+        if(txtUsuario.getText().equals("Insira seu usuário")) {
+            txtUsuario.setText("");
+            txtUsuario.setForeground(new Color(153,153,153));
+        }
+    }//GEN-LAST:event_txtUsuarioFocusGained
+
+    private void txtUsuarioFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtUsuarioFocusLost
+        if(txtUsuario.getText().equals("")) {
+            txtUsuario.setText("Insira seu usuário");
+            txtUsuario.setForeground(new Color(153,153,153));
+        }
+    }//GEN-LAST:event_txtUsuarioFocusLost
+
+    private void txtSenhaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtSenhaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtSenhaActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -205,7 +242,7 @@ public class TelaLogin extends javax.swing.JFrame {
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Metal".equals(info.getName())) {
+                if ("FlatLaf Light".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
