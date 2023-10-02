@@ -140,7 +140,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jLabel8MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel8MouseClicked
-        TelaCadastroLivro telaCadastroLivro = new TelaCadastroLivro();
+        TelaCadastros telaCadastroLivro = new TelaCadastros();
             telaCadastroLivro.setVisible(true);
             dispose();
     }//GEN-LAST:event_jLabel8MouseClicked
