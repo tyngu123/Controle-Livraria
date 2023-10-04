@@ -1,0 +1,12 @@
+
+Talvez remover o TelaPrincipal e ser só uma página que muda.
+Somente um JFRAME.
+Fazer validações de campos
+Fazer com que a tabela editora se conecte ao banco xxxxx
+Tornar campo ID disabled xxxxxxxx
+Implementar botão de sair?
+Criar no banco tabela usuario, talvez com role? veremos..
+Ver como implementar barra de pesquisa, se vai ser em uma outra tela
+Refactorar o código, talvez usar o modelo MVC.
+Função de adicionar editora,excluir,alterar
+
