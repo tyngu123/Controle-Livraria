@@ -22,7 +22,7 @@ import javax.swing.JOptionPane;
 public class TelaLogin extends javax.swing.JFrame {
     
     private static final String usuarioDB = "root";
-    private static final String senhaDB = "";
+    private static final String senhaDB = "1234";
     private static final String dataConn = "jdbc:mysql://localhost:3306/livrariadb";
     
     Connection sqlConn = null;
@@ -253,10 +253,16 @@ public class TelaLogin extends javax.swing.JFrame {
                JOptionPane.showMessageDialog(this, "Usuário ou senha incorreto."); 
                txtUsuario.setText("");
                txtSenha.setText("");
-               sqlConn.close();
             }
         } catch (SQLException ex) {
             Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                sqlConn.close();
+                rs.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }//GEN-LAST:event_loginButtonActionPerformed
 

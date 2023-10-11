@@ -12,6 +12,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -23,13 +27,16 @@ import javax.swing.table.DefaultTableModel;
 public class TelaCadastros extends javax.swing.JFrame {
 
     private static final String usuario = "root";
-    private static final String senha = "";
+    private static final String senha = "1234";
     private static final String dataConn = "jdbc:mysql://localhost:3306/livrariadb";
     
     Connection sqlConn = null;
     PreparedStatement pst = null;
     ResultSet rs = null;
-    int q, i, id, deleteItem;
+    int q, i, id, deleteItem, sairItem;
+    
+    private static final String regex = "^[\\w!#$%&amp;'*+/=?`{|}~^-]+(?:\\.[\\w!#$%&amp;'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
+    Pattern pattern = Pattern.compile(regex);
     
     
     
@@ -39,6 +46,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         atualizarTabelaEditora();
         atualizarTabelaUsuario();
         popularComboBoxFuncaoUsuario();
+        popularComboBoxEditoraLivro();
  
     }
     
@@ -53,6 +61,7 @@ public class TelaCadastros extends javax.swing.JFrame {
     
     // Carrega permissoes e nome de usuario para que apareça na tela
     public void carregarUsuario() {
+        jLabel25.setText(TelaLogin.nomeLogado);
         if(TelaLogin.funcaoLogado.equals("Funcionario")) {
             System.out.println("É funcionario");
             jTabbedPane1.removeTabAt(2);
@@ -68,18 +77,99 @@ public class TelaCadastros extends javax.swing.JFrame {
         while (rs.next()) {  
             jComboBoxFuncaoUsuario.addItem(rs.getString("funcao"));  
         }
-        sqlConn.close();
+        
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex);
+        } finally {
+            try {
+                sqlConn.close();
+                pst.close();
+                rs.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(TelaCadastros.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
     
-    public boolean validarCamposEditora() {
-        if(txtNomeEditora.getText().equals("")) {
-        JOptionPane.showMessageDialog(null, "Nome é obrigatório.");
-            if(txtNomeEditora.getText().length() > 255) {
-                JOptionPane.showMessageDialog(null, "Caracteres não pode ser maior que 255"); 
+    public void popularComboBoxEditoraLivro() {
+        try {
+        Class.forName("com.mysql.jdbc.Driver");
+        sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
+        pst = sqlConn.prepareStatement("select * from editora"); 
+        rs = pst.executeQuery();
+        while (rs.next()) {  
+            jComboBoxEditoraLivro.addItem(rs.getString("nome_editora"));  
+        }
+        sqlConn.close();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, ex);
+        } finally {
+            try {
+                sqlConn.close();
+                pst.close();
+                rs.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(TelaCadastros.class.getName()).log(Level.SEVERE, null, ex);
             }
+                
+        }
+    }
+   
+    
+    public boolean validarCamposEditora() {
+        
+        Matcher matcher = pattern.matcher(txtEmailEditora.getText());
+        
+        if(txtNomeEditora.getText().equals("")) {
+            JOptionPane.showMessageDialog(null, "Nome é obrigatório.");
+            return false;
+        }
+      
+        if(txtNomeEditora.getText().length() > 255) {
+            JOptionPane.showMessageDialog(null, "Usuário não pode ultrapassar 255 caracteres.");
+            return false;
+        }
+        if(txtTelefoneEditora.getText().length() > 15) {
+            JOptionPane.showMessageDialog(null, "Telefone não pode ultrapassar 15 caracteres.");
+            return false;
+        }
+        if(!matcher.matches()) {
+            JOptionPane.showMessageDialog(null, "Email inválido.");
+            return false;
+        }
+        
+        
+        return true;
+        
+    }
+    
+    public boolean validarCamposUsuario() {
+        String regex = "^[\\w!#$%&amp;'*+/=?`{|}~^-]+(?:\\.[\\w!#$%&amp;'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(txtEmailUsuario.getText());
+        
+        if(txtLoginUsuario.getText().equals("")) {
+            JOptionPane.showMessageDialog(null, "Login é obrigatório.");
+            return false;
+        }
+        if(txtNomeUsuario.getText().equals("")){
+            JOptionPane.showMessageDialog(null, "Nome é obrigatório.");
+            return false;
+        }
+        if(txtLoginUsuario.getText().length() > 12) {
+            JOptionPane.showMessageDialog(null, "Usuário não pode ultrapassar 12 caracteres.");
+            return false;
+        }
+        if(txtSenhaUsuario.getText().length() > 8) {
+            JOptionPane.showMessageDialog(null, "Senha não pode ultrapassar 8 caracteres.");
+            return false;
+        }
+        if(txtSenhaUsuario.getText().equals("")) {
+            JOptionPane.showMessageDialog(null, "Senha não pode estar vazia.");
+            return false;
+        }
+        if(!matcher.matches()) {
+            JOptionPane.showMessageDialog(null, "E-mail inválido.");
             return false;
         }
         return true;
@@ -192,7 +282,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         txtQuantidadeLivro = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        jComboBoxEditoraLivro = new javax.swing.JComboBox<>();
         jLabel11 = new javax.swing.JLabel();
         usuarioPanel = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -212,11 +302,15 @@ public class TelaCadastros extends javax.swing.JFrame {
         jLabel21 = new javax.swing.JLabel();
         jComboBoxFuncaoUsuario = new javax.swing.JComboBox<>();
         jLabel22 = new javax.swing.JLabel();
+        jLabel23 = new javax.swing.JLabel();
+        txtNomeUsuario = new javax.swing.JTextField();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
+        jLabel25 = new javax.swing.JLabel();
+        sairUsuarioButton = new javax.swing.JButton();
 
         jScrollPane1.setViewportView(jEditorPane1);
 
@@ -265,7 +359,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         editarEditoraButton.setText("Editar");
         editarEditoraButton.setBorder(null);
         editarEditoraButton.setBorderPainted(false);
-        editarEditoraButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        editarEditoraButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         editarEditoraButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editarEditoraButtonActionPerformed(evt);
@@ -327,7 +421,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         adicionarNovaEditoraButton.setForeground(new java.awt.Color(255, 255, 255));
         adicionarNovaEditoraButton.setBorder(null);
         adicionarNovaEditoraButton.setBorderPainted(false);
-        adicionarNovaEditoraButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        adicionarNovaEditoraButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         adicionarNovaEditoraButton.setLabel("Adicionar Novo");
         adicionarNovaEditoraButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -365,7 +459,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         excluirEditoraButton.setText("Excluir");
         excluirEditoraButton.setBorder(null);
         excluirEditoraButton.setBorderPainted(false);
-        excluirEditoraButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        excluirEditoraButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         excluirEditoraButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 excluirEditoraButtonActionPerformed(evt);
@@ -525,7 +619,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         adicionarNovoButton.setText("Editar");
         adicionarNovoButton.setBorder(null);
         adicionarNovoButton.setBorderPainted(false);
-        adicionarNovoButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        adicionarNovoButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         adicionarNovoButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 adicionarNovoButtonActionPerformed(evt);
@@ -586,7 +680,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         adicionarNovoLivroButton.setForeground(new java.awt.Color(255, 255, 255));
         adicionarNovoLivroButton.setBorder(null);
         adicionarNovoLivroButton.setBorderPainted(false);
-        adicionarNovoLivroButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        adicionarNovoLivroButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         adicionarNovoLivroButton.setLabel("Adicionar Novo");
         adicionarNovoLivroButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -624,7 +718,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         adicionarNovoButton2.setText("Excluir");
         adicionarNovoButton2.setBorder(null);
         adicionarNovoButton2.setBorderPainted(false);
-        adicionarNovoButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        adicionarNovoButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         adicionarNovoButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 adicionarNovoButton2ActionPerformed(evt);
@@ -687,8 +781,6 @@ public class TelaCadastros extends javax.swing.JFrame {
         jLabel10.setText("Quantidade");
         jLabel10.setToolTipText("");
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         jLabel11.setBackground(new java.awt.Color(51, 51, 51));
         jLabel11.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
         jLabel11.setForeground(new java.awt.Color(51, 51, 51));
@@ -742,7 +834,7 @@ public class TelaCadastros extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(livroPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(jComboBoxEditoraLivro, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         livroPanelLayout.setVerticalGroup(
@@ -784,7 +876,7 @@ public class TelaCadastros extends javax.swing.JFrame {
                     .addComponent(jLabel11))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(livroPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jComboBox1)
+                    .addComponent(jComboBoxEditoraLivro)
                     .addComponent(txtQuantidadeLivro, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, Short.MAX_VALUE)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -826,7 +918,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         editarUsuarioButton.setText("Editar");
         editarUsuarioButton.setBorder(null);
         editarUsuarioButton.setBorderPainted(false);
-        editarUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        editarUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         editarUsuarioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editarUsuarioButtonActionPerformed(evt);
@@ -888,7 +980,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         adicionarNovoUsuarioButton.setForeground(new java.awt.Color(255, 255, 255));
         adicionarNovoUsuarioButton.setBorder(null);
         adicionarNovoUsuarioButton.setBorderPainted(false);
-        adicionarNovoUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        adicionarNovoUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         adicionarNovoUsuarioButton.setLabel("Adicionar Novo");
         adicionarNovoUsuarioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -926,7 +1018,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         excluirUsuarioButton.setText("Excluir");
         excluirUsuarioButton.setBorder(null);
         excluirUsuarioButton.setBorderPainted(false);
-        excluirUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        excluirUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         excluirUsuarioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 excluirUsuarioButtonActionPerformed(evt);
@@ -992,6 +1084,30 @@ public class TelaCadastros extends javax.swing.JFrame {
         jLabel22.setText("Função");
         jLabel22.setToolTipText("");
 
+        jLabel23.setBackground(new java.awt.Color(51, 51, 51));
+        jLabel23.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabel23.setForeground(new java.awt.Color(51, 51, 51));
+        jLabel23.setText("Nome");
+        jLabel23.setToolTipText("");
+
+        txtNomeUsuario.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        txtNomeUsuario.setForeground(new java.awt.Color(51, 51, 51));
+        txtNomeUsuario.setToolTipText("");
+        txtNomeUsuario.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED, null, new java.awt.Color(0, 0, 0), null, null));
+        txtNomeUsuario.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtNomeUsuarioFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtNomeUsuarioFocusLost(evt);
+            }
+        });
+        txtNomeUsuario.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtNomeUsuarioActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout usuarioPanelLayout = new javax.swing.GroupLayout(usuarioPanel);
         usuarioPanel.setLayout(usuarioPanelLayout);
         usuarioPanelLayout.setHorizontalGroup(
@@ -1009,36 +1125,37 @@ public class TelaCadastros extends javax.swing.JFrame {
                                 .addGap(98, 98, 98)
                                 .addComponent(adicionarNovoUsuarioButton, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE))
                             .addGroup(usuarioPanelLayout.createSequentialGroup()
-                                .addComponent(txtLoginUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtLoginUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(98, 98, 98)
                                 .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(editarUsuarioButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(excluirUsuarioButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .addGroup(usuarioPanelLayout.createSequentialGroup()
-                                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 490, Short.MAX_VALUE)))
                         .addGap(18, 18, 18))
                     .addGroup(usuarioPanelLayout.createSequentialGroup()
                         .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtSenhaUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(usuarioPanelLayout.createSequentialGroup()
-                        .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtPesquisaUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(usuarioPanelLayout.createSequentialGroup()
-                        .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtEmailUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jComboBoxFuncaoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(33, 33, 33))))
+                            .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(usuarioPanelLayout.createSequentialGroup()
+                                .addComponent(txtSenhaUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtNomeUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(usuarioPanelLayout.createSequentialGroup()
+                                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtEmailUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jComboBoxFuncaoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         usuarioPanelLayout.setVerticalGroup(
             usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1050,19 +1167,24 @@ public class TelaCadastros extends javax.swing.JFrame {
                     .addComponent(adicionarNovoUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtIdUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(usuarioPanelLayout.createSequentialGroup()
-                        .addComponent(editarUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel23)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(excluirUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(usuarioPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel18)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtLoginUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel19)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtSenhaUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(txtNomeUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(usuarioPanelLayout.createSequentialGroup()
+                            .addComponent(editarUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(excluirUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(usuarioPanelLayout.createSequentialGroup()
+                            .addComponent(jLabel18)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(txtLoginUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabel19)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(txtSenhaUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel20)
@@ -1071,7 +1193,7 @@ public class TelaCadastros extends javax.swing.JFrame {
                 .addGroup(usuarioPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jComboBoxFuncaoUsuario)
                     .addComponent(txtEmailUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 51, Short.MAX_VALUE)
                 .addComponent(jLabel21)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtPesquisaUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1149,6 +1271,22 @@ public class TelaCadastros extends javax.swing.JFrame {
             }
         });
 
+        jLabel25.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabel25.setForeground(new java.awt.Color(250, 250, 250));
+        jLabel25.setText("Usuario");
+
+        sairUsuarioButton.setBackground(new java.awt.Color(255, 51, 51));
+        sairUsuarioButton.setFont(new java.awt.Font("Verdana", 1, 10)); // NOI18N
+        sairUsuarioButton.setForeground(new java.awt.Color(255, 255, 255));
+        sairUsuarioButton.setText("Sair");
+        sairUsuarioButton.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 1, 1, 1, new java.awt.Color(255, 255, 255)));
+        sairUsuarioButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        sairUsuarioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sairUsuarioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1159,27 +1297,37 @@ public class TelaCadastros extends javax.swing.JFrame {
                         .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(32, 32, 32))
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addContainerGap()
+                        .addComponent(jLabel25, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(6, 6, 6))
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(sairUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(26, 26, 26)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel8)
-                .addContainerGap(380, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(38, 38, 38)
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel8)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 295, Short.MAX_VALUE)
+                .addComponent(sairUsuarioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         getContentPane().add(jPanel2, java.awt.BorderLayout.CENTER);
@@ -1261,6 +1409,7 @@ public class TelaCadastros extends javax.swing.JFrame {
     }//GEN-LAST:event_txtQuantidadeLivroActionPerformed
 
     private void editarEditoraButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editarEditoraButtonActionPerformed
+        if(validarCamposEditora()) {
         try {
             Class.forName("com.mysql.jdbc.Driver");
             sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
@@ -1282,9 +1431,11 @@ public class TelaCadastros extends javax.swing.JFrame {
             }
             
             atualizarTabelaEditora();
+            popularComboBoxEditoraLivro();
         } catch(Exception ex) {
             JOptionPane.showMessageDialog(null, ex);
-        }        
+        }  
+        }
     }//GEN-LAST:event_editarEditoraButtonActionPerformed
 
     private void txtIdEditoraFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtIdEditoraFocusGained
@@ -1325,10 +1476,12 @@ public class TelaCadastros extends javax.swing.JFrame {
             pst.executeUpdate();
             JOptionPane.showMessageDialog(this, "Editora adicionada com sucesso!");
             atualizarTabelaEditora();
+            popularComboBoxEditoraLivro();
             txtIdEditora.setText("");
             txtNomeEditora.setText("");
             txtTelefoneEditora.setText("");
             txtEmailEditora.setText("");
+            
         } catch(Exception ex) {
             JOptionPane.showMessageDialog(null, ex);
         }
@@ -1362,6 +1515,7 @@ public class TelaCadastros extends javax.swing.JFrame {
                 pst.executeUpdate();
                 JOptionPane.showMessageDialog(this,"Editora excluida com sucesso!");
                 atualizarTabelaEditora();
+                popularComboBoxEditoraLivro();
                 
                 txtIdEditora.setText("");
                 txtNomeEditora.setText("");
@@ -1480,6 +1634,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         
         txtIdUsuario.setText(RecordTable.getValueAt(SelectedRows, 0).toString());
         txtLoginUsuario.setText(RecordTable.getValueAt(SelectedRows, 1).toString());
+        txtNomeUsuario.setText(RecordTable.getValueAt(SelectedRows,2).toString());
         txtSenhaUsuario.setText(RecordTable.getValueAt(SelectedRows, 3).toString());
         txtEmailUsuario.setText(RecordTable.getValueAt(SelectedRows, 4).toString());
         if(RecordTable.getValueAt(SelectedRows,5).toString().equals("Administrador")) jComboBoxFuncaoUsuario.setSelectedIndex(0);
@@ -1488,7 +1643,34 @@ public class TelaCadastros extends javax.swing.JFrame {
     }//GEN-LAST:event_usuarioTableMouseClicked
 
     private void editarUsuarioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editarUsuarioButtonActionPerformed
-        // TODO add your handling code here:
+        if(validarCamposUsuario()) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
+            pst = sqlConn.prepareStatement("update livrariadb.usuario set login = ?, senha = ?, nome = ?, email = ?, id_funcao = ? "
+                    + "where id_usuario = ?");
+                    
+            pst.setString(1, txtLoginUsuario.getText());
+            pst.setString(2, txtSenhaUsuario.getText());
+            pst.setString(3, txtNomeUsuario.getText());
+            pst.setString(4, txtEmailUsuario.getText());
+            pst.setInt(5, jComboBoxFuncaoUsuario.getSelectedIndex() + 1);
+            pst.setString(6, txtIdUsuario.getText());
+            
+            pst.executeUpdate();
+            // fazer metodo validação
+            if(!txtIdUsuario.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Usuario atualizado com sucesso!");
+            }
+            else {
+                JOptionPane.showMessageDialog(this, "Selecione uma editora.");
+            }
+            
+            atualizarTabelaUsuario();
+        } catch(Exception ex) {
+            JOptionPane.showMessageDialog(null, ex);
+        }   
+        }
     }//GEN-LAST:event_editarUsuarioButtonActionPerformed
 
     private void txtIdUsuarioFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtIdUsuarioFocusGained
@@ -1516,7 +1698,36 @@ public class TelaCadastros extends javax.swing.JFrame {
     }//GEN-LAST:event_txtLoginUsuarioActionPerformed
 
     private void adicionarNovoUsuarioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_adicionarNovoUsuarioButtonActionPerformed
-        // TODO add your handling code here:
+        if(validarCamposUsuario()) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
+            pst = sqlConn.prepareStatement("insert into livrariadb.usuario(login,senha,nome,email,id_funcao)"
+                    + "values(?,?,?,?,?)");
+            pst.setString(1, txtLoginUsuario.getText());
+            pst.setString(2, txtSenhaUsuario.getText());
+            pst.setString(3, txtNomeUsuario.getText());
+            pst.setString(4, txtEmailUsuario.getText());
+            pst.setInt(5, jComboBoxFuncaoUsuario.getSelectedIndex()+1);
+            
+            if(!txtIdUsuario.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Usuario atualizado com sucesso!");
+            }
+            pst.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Usuário adicionado com sucesso!");
+            atualizarTabelaUsuario();
+            txtIdUsuario.setText("");
+            txtLoginUsuario.setText("");
+            txtSenhaUsuario.setText("");
+            txtNomeUsuario.setText("");
+            txtEmailUsuario.setText("");
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(TelaCadastros.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
+            
+        } catch (SQLException ex) {
+            System.err.println(ex);
+        } 
+        }
     }//GEN-LAST:event_adicionarNovoUsuarioButtonActionPerformed
 
     private void txtSenhaUsuarioFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtSenhaUsuarioFocusGained
@@ -1532,7 +1743,34 @@ public class TelaCadastros extends javax.swing.JFrame {
     }//GEN-LAST:event_txtSenhaUsuarioActionPerformed
 
     private void excluirUsuarioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_excluirUsuarioButtonActionPerformed
-        // TODO add your handling code here:
+        DefaultTableModel RecordTable = (DefaultTableModel)usuarioTable.getModel();
+        int SelectedRows = usuarioTable.getSelectedRow();
+        try {
+            id = Integer.parseInt(RecordTable.getValueAt(SelectedRows, 0).toString());
+            deleteItem = JOptionPane.showConfirmDialog(null,"Tem certeza que deseja excluir esse usuário?",
+                    "Warning",JOptionPane.YES_NO_OPTION);
+            if (deleteItem == JOptionPane.YES_OPTION) {
+                Class.forName("com.mysql.jdbc.Driver");
+                sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
+                pst = sqlConn.prepareStatement("delete from livrariadb.usuario where id_usuario = ?");
+                pst.setInt(1, id);
+                pst.executeUpdate();
+                JOptionPane.showMessageDialog(this,"Usuario excluido com sucesso!");
+                atualizarTabelaUsuario();
+                
+                txtIdUsuario.setText("");
+                txtLoginUsuario.setText("");
+                txtSenhaUsuario.setText("");
+                txtNomeUsuario.setText("");
+                txtEmailUsuario.setText("");
+
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(TelaCadastros.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
+            
+        } catch (SQLException ex) {
+            System.err.println(ex);
+        }
     }//GEN-LAST:event_excluirUsuarioButtonActionPerformed
 
     private void txtEmailUsuarioFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtEmailUsuarioFocusGained
@@ -1560,8 +1798,64 @@ public class TelaCadastros extends javax.swing.JFrame {
     }//GEN-LAST:event_txtPesquisaUsuarioActionPerformed
 
     private void txtPesquisaUsuarioKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPesquisaUsuarioKeyTyped
-        // TODO add your handling code here:
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
+            pst = sqlConn.prepareStatement("select * from usuario u"
+                    + " join funcao f"
+                    + " on u.id_funcao = f.id_funcao"
+                    + " where u.login like ?");
+            pst.setString(1, "%" + txtPesquisaUsuario.getText() + "%");
+            System.out.println(txtPesquisaUsuario.getText());
+            rs = pst.executeQuery();
+            ResultSetMetaData stData = rs.getMetaData();
+            
+            q = stData.getColumnCount();
+            
+            DefaultTableModel RecordTable = (DefaultTableModel)usuarioTable.getModel();
+            RecordTable.setRowCount(0);
+            
+            while(rs.next()) {
+                Vector columnData = new Vector();
+                for (i = 1; i <= q; i++) {
+                    columnData.add(rs.getInt("id_usuario"));
+                    columnData.add(rs.getString("login"));
+                    columnData.add(rs.getString("nome"));
+                    columnData.add(rs.getString("senha"));
+                    columnData.add(rs.getString("email"));
+                    columnData.add(rs.getString("funcao"));
+                }
+                RecordTable.addRow(columnData);
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(TelaCadastros.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
+            
+        } catch (SQLException ex) {
+            System.err.println(ex);
+        } 
     }//GEN-LAST:event_txtPesquisaUsuarioKeyTyped
+
+    private void txtNomeUsuarioFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtNomeUsuarioFocusGained
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtNomeUsuarioFocusGained
+
+    private void txtNomeUsuarioFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtNomeUsuarioFocusLost
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtNomeUsuarioFocusLost
+
+    private void txtNomeUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNomeUsuarioActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtNomeUsuarioActionPerformed
+
+    private void sairUsuarioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sairUsuarioButtonActionPerformed
+       sairItem = JOptionPane.showConfirmDialog(null,"Tem certeza que deseja sair?",
+               "Warning",JOptionPane.YES_NO_OPTION);
+       if (deleteItem == JOptionPane.YES_OPTION) {
+       TelaLogin telaLogin = new TelaLogin();
+       telaLogin.setVisible(true);
+       dispose();
+       }
+    }//GEN-LAST:event_sairUsuarioButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1618,7 +1912,7 @@ public class TelaCadastros extends javax.swing.JFrame {
     private javax.swing.JTable editoraTable;
     private javax.swing.JButton excluirEditoraButton;
     private javax.swing.JButton excluirUsuarioButton;
-    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<String> jComboBoxEditoraLivro;
     private javax.swing.JComboBox<String> jComboBoxFuncaoUsuario;
     private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JEditorPane jEditorPane1;
@@ -1637,6 +1931,8 @@ public class TelaCadastros extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1653,6 +1949,7 @@ public class TelaCadastros extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JPanel livroPanel;
+    private javax.swing.JButton sairUsuarioButton;
     private javax.swing.JTextField txtAutorLivro;
     private javax.swing.JTextField txtEmailEditora;
     private javax.swing.JTextField txtEmailUsuario;
@@ -1661,6 +1958,7 @@ public class TelaCadastros extends javax.swing.JFrame {
     private javax.swing.JTextField txtIdUsuario;
     private javax.swing.JTextField txtLoginUsuario;
     private javax.swing.JTextField txtNomeEditora;
+    private javax.swing.JTextField txtNomeUsuario;
     private javax.swing.JTextField txtPesquisaEditora;
     private javax.swing.JTextField txtPesquisaUsuario;
     private javax.swing.JTextField txtPrecoLivro;
