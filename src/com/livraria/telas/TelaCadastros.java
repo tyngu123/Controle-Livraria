@@ -5,12 +5,16 @@
 package com.livraria.telas;
 
 
+import com.livraria.entidades.Editora;
+import com.livraria.entidades.Funcao;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,12 +42,15 @@ public class TelaCadastros extends javax.swing.JFrame {
     private static final String regex = "^[\\w!#$%&amp;'*+/=?`{|}~^-]+(?:\\.[\\w!#$%&amp;'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$";
     Pattern pattern = Pattern.compile(regex);
     
+    HashMap<Integer,String> mapaFuncoes = new HashMap<Integer,String>();
+    
     
     
     public TelaCadastros() {
         initComponents();
         carregarUsuario();
         atualizarTabelaEditora();
+        atualizarTabelaLivro();
         atualizarTabelaUsuario();
         popularComboBoxFuncaoUsuario();
         popularComboBoxEditoraLivro();
@@ -75,7 +82,10 @@ public class TelaCadastros extends javax.swing.JFrame {
         pst = sqlConn.prepareStatement("select * from funcao"); 
         rs = pst.executeQuery();
         while (rs.next()) {  
-            jComboBoxFuncaoUsuario.addItem(rs.getString("funcao"));  
+            
+            mapaFuncoes.put(rs.getInt("id_funcao"), rs.getString("funcao"));
+           
+            //jComboBoxFuncaoUsuario.addItem(mapaFuncoes.getValue());
         }
         
         } catch (Exception ex) {
@@ -97,8 +107,11 @@ public class TelaCadastros extends javax.swing.JFrame {
         sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
         pst = sqlConn.prepareStatement("select * from editora"); 
         rs = pst.executeQuery();
-        while (rs.next()) {  
-            jComboBoxEditoraLivro.addItem(rs.getString("nome_editora"));  
+        while (rs.next()) {
+            Editora editora = new Editora();
+            editora.setId(rs.getInt("id_editora"));
+            editora.setNome(rs.getString("nome_editora"));
+            jComboBoxEditoraLivro.addItem(editora.getNome());  
         }
         sqlConn.close();
         } catch (Exception ex) {
@@ -206,7 +219,41 @@ public class TelaCadastros extends javax.swing.JFrame {
         }
     }
     
-    // Atualiza a tabela usuario com dados do banco
+    public void atualizarTabelaLivro() {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            sqlConn = DriverManager.getConnection(dataConn,usuario,senha);
+             pst = sqlConn.prepareStatement("select * from livro l"
+                    + " join editora e"
+                    + " on l.id_editora = e.id_editora");
+            
+            rs = pst.executeQuery();
+            ResultSetMetaData stData = rs.getMetaData();
+            
+            q = stData.getColumnCount();
+            
+            DefaultTableModel RecordTable = (DefaultTableModel)livroTable.getModel();
+            RecordTable.setRowCount(0);
+            
+            while(rs.next()) {
+                Vector columnData = new Vector();
+                for (i = 1; i <= q; i++) {
+                    columnData.add(rs.getInt("id"));
+                    columnData.add(rs.getString("titulo"));
+                    columnData.add(rs.getString("autor"));
+                    columnData.add(rs.getDate("ano_publicacao"));
+                    columnData.add("R$" + rs.getDouble("preco"));
+                    columnData.add(rs.getInt("quantidade"));
+                    columnData.add(rs.getString("e.nome_editora"));
+                }
+                RecordTable.addRow(columnData);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, ex);
+        }
+    }
+    
+    // Atualiza a tabela livro com dados do banco
     public void atualizarTabelaUsuario() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -266,7 +313,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         jLabel17 = new javax.swing.JLabel();
         livroPanel = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        livroTable = new javax.swing.JTable();
         adicionarNovoButton = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         txtIdLivro = new javax.swing.JTextField();
@@ -600,7 +647,7 @@ public class TelaCadastros extends javax.swing.JFrame {
 
         livroPanel.setBackground(new java.awt.Color(255, 255, 255));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        livroTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null},
                 {null, null, null, null, null, null, null},
@@ -611,7 +658,12 @@ public class TelaCadastros extends javax.swing.JFrame {
                 "ID", "Título", "Autor", "Data Publicação", "Preço", "Quantidade", "Editora"
             }
         ));
-        jScrollPane2.setViewportView(jTable1);
+        livroTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                livroTableMouseClicked(evt);
+            }
+        });
+        jScrollPane2.setViewportView(livroTable);
 
         adicionarNovoButton.setBackground(new java.awt.Color(255, 51, 51));
         adicionarNovoButton.setFont(new java.awt.Font("Verdana", 1, 14)); // NOI18N
@@ -632,6 +684,7 @@ public class TelaCadastros extends javax.swing.JFrame {
         jLabel2.setText("Livro ID");
         jLabel2.setToolTipText("");
 
+        txtIdLivro.setEditable(false);
         txtIdLivro.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
         txtIdLivro.setForeground(new java.awt.Color(51, 51, 51));
         txtIdLivro.setToolTipText("");
@@ -1708,7 +1761,7 @@ public class TelaCadastros extends javax.swing.JFrame {
             pst.setString(2, txtSenhaUsuario.getText());
             pst.setString(3, txtNomeUsuario.getText());
             pst.setString(4, txtEmailUsuario.getText());
-            pst.setInt(5, jComboBoxFuncaoUsuario.getSelectedIndex()+1);
+            pst.setInt(5, jComboBoxFuncaoUsuario.getSelectedItem());
             
             if(!txtIdUsuario.getText().equals("")) {
                 JOptionPane.showMessageDialog(this, "Usuario atualizado com sucesso!");
@@ -1857,6 +1910,19 @@ public class TelaCadastros extends javax.swing.JFrame {
        }
     }//GEN-LAST:event_sairUsuarioButtonActionPerformed
 
+    private void livroTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_livroTableMouseClicked
+        //DefaultTableModel RecordTable = (DefaultTableModel)usuarioTable.getModel();
+        //int SelectedRows = usuarioTable.getSelectedRow();
+        
+        //txtIdLivro.setText(RecordTable.getValueAt(SelectedRows, 0).toString());
+        //txtTituloLivro.setText(RecordTable.getValueAt(SelectedRows, 1).toString());
+        //txtAutorLivro.setText(RecordTable.getValueAt(SelectedRows,2).toString());
+        //jDateChooser1.setDateFormatString(RecordTable.getValueAt(SelectedRows,3).toString());
+        //txtPrecoLivro.setText(RecordTable.getValueAt(SelectedRows, 4).toString());
+        //txtQuantidadeLivro.setText(RecordTable.getValueAt(SelectedRows, 5).toString());
+       // jComboBoxEditoraLivro.
+    }//GEN-LAST:event_livroTableMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -1947,8 +2013,8 @@ public class TelaCadastros extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JPanel livroPanel;
+    private javax.swing.JTable livroTable;
     private javax.swing.JButton sairUsuarioButton;
     private javax.swing.JTextField txtAutorLivro;
     private javax.swing.JTextField txtEmailEditora;

@@ -8,32 +8,36 @@ package com.livraria.entidades;
  *
  * @author yago.aguiar
  */
-public class Editora {
+public class Funcao {
     private Integer id;
     private String nome;
 
-    public Editora(){}
-
-    public Editora(Integer id, String nome, String telefone, String email) {
+    public Funcao(Integer id, String nome) {
         this.id = id;
         this.nome = nome;
     }
+    
+    public Funcao() {}
 
     public Integer getId() {
         return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getNome() {
         return nome;
     }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
     public void setNome(String nome) {
         this.nome = nome;
     }
-
+    
+    
+    
+    
+    
     
 }
